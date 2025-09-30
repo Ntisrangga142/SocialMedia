@@ -1,0 +1,97 @@
+package handlers
+
+import (
+	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/ntisrangga142/chat/internals/models"
+	"github.com/ntisrangga142/chat/internals/repositories"
+	"github.com/ntisrangga142/chat/internals/utils"
+	"github.com/ntisrangga142/chat/pkg"
+	"github.com/redis/go-redis/v9"
+)
+
+type AuthHandler struct {
+	repo *repositories.Auth
+	rdb  *redis.Client
+}
+
+func NewAuthHandler(repo *repositories.Auth, rdb *redis.Client) *AuthHandler {
+	return &AuthHandler{repo: repo, rdb: rdb}
+}
+
+func (h *AuthHandler) Register(ctx *gin.Context) {
+	var req models.AuthRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "Bad Request", "failed binding data", err)
+		return
+	}
+
+	// Hash Password
+	hashConfig := pkg.NewHashConfig()
+	hashConfig.UseRecommended()
+	hashedPassword, err := hashConfig.GenHash(req.Password)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "failed hashed password", err)
+		return
+	}
+
+	// Repository Register
+	if err := h.repo.Register(ctx, req.Email, hashedPassword); err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "Email is already registered", err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, models.Response[any]{
+		Success: true,
+		Message: "Register account successful",
+	})
+}
+
+func (h *AuthHandler) Login(ctx *gin.Context) {
+	var req models.AuthRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "Bad Request", "failed binding data", err)
+		return
+	}
+
+	// Cari akun
+	userID, hashedPassword, err := h.repo.Login(ctx.Request.Context(), req.Email)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "user not found", err)
+		return
+	}
+	if userID == 0 {
+		utils.HandleError(ctx, http.StatusUnauthorized, "Unauthorized", "user not found", err)
+		return
+	}
+
+	// Verifikasi password
+	hashConfig := pkg.NewHashConfig()
+	match, err := hashConfig.ComparePasswordAndHash(req.Password, hashedPassword)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "failed compare password", err)
+		return
+	}
+	if !match {
+		utils.HandleError(ctx, http.StatusUnauthorized, "Unauthorized", "invalid username or password", errors.New("invalid password"))
+		return
+	}
+
+	// Generate JWT
+	claims := pkg.NewJWTClaims(userID)
+	token, err := claims.GenToken()
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "failed generate token", err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.ResponseLogin{
+		Success: true,
+		Message: "Login successful",
+		Token:   token,
+	})
+}

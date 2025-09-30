@@ -1,0 +1,68 @@
+package repositories
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
+)
+
+type Auth struct {
+	db  *pgxpool.Pool
+	rdb *redis.Client
+}
+
+func NewAuthRepo(Db *pgxpool.Pool, Rdb *redis.Client) *Auth {
+	return &Auth{db: Db, rdb: Rdb}
+}
+
+func (r *Auth) Register(ctx context.Context, email, password string) error {
+	// mulai transaction
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	// insert ke account
+	var userID int
+	queryAccount := `INSERT INTO accounts (email, password) VALUES ($1, $2) RETURNING id`
+	if err = tx.QueryRow(ctx, queryAccount, email, password).Scan(&userID); err != nil {
+		return fmt.Errorf("failed to insert accounts = %w", err)
+	}
+
+	// insert ke profiles
+	queryUser := `INSERT INTO profiles (id, fullname, phone, img) VALUES ($1, NULL, NULL, NULL);`
+	if _, err = tx.Exec(ctx, queryUser, userID); err != nil {
+		return fmt.Errorf("failed to insert profiles = %w", err)
+	}
+
+	// commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Auth) Login(ctx context.Context, email string) (int, string, error) {
+	query := `SELECT id, password FROM accounts WHERE email = $1`
+	var id *int
+	var hashedPassword *string
+	err := r.db.QueryRow(ctx, query, email).Scan(&id, &hashedPassword)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, "", fmt.Errorf("user not found")
+		}
+		return 0, "", err
+	}
+
+	return *id, *hashedPassword, nil
+}

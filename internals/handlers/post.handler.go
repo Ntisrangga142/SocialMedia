@@ -39,10 +39,25 @@ func (h *PostHandler) GetFollowingPosts(ctx *gin.Context) {
 		return
 	}
 
+	var cachedData models.PostFeed
+	var redisKey = fmt.Sprintf("Chat-ListPosts-%d", uid)
+	if err := utils.CacheHit(ctx.Request.Context(), h.rdb, redisKey, &cachedData); err == nil {
+		ctx.JSON(http.StatusOK, models.Response[any]{
+			Success: true,
+			Message: "Success Get List Post (from cache)",
+			Data:    cachedData,
+		})
+		return
+	}
+
 	posts, err := h.repo.GetFollowingPosts(ctx, uid)
 	if err != nil {
 		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Error", "failed to get posts", err)
 		return
+	}
+
+	if err := utils.RenewCache(ctx.Request.Context(), h.rdb, redisKey, posts, 2); err != nil {
+		log.Println("Failed to set redis cache:", err)
 	}
 
 	ctx.JSON(http.StatusOK, models.Response[any]{
@@ -179,11 +194,6 @@ func (h *PostHandler) LikePost(ctx *gin.Context) {
 	}
 
 	postID, _ := strconv.Atoi(ctx.Param("id"))
-	if err := h.repo.DeleteLike(ctx, uid, postID); err != nil {
-		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "failed to unlike post", err)
-		return
-	}
-
 	if err := h.repo.CreateLike(ctx, uid, postID); err != nil {
 		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "failed to like post", err)
 		return

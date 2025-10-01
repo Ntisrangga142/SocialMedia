@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ntisrangga142/chat/internals/models"
@@ -26,6 +29,18 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		utils.HandleError(ctx, http.StatusBadRequest, "Bad Request", "failed binding data", err)
+		return
+	}
+
+	// Validasi email
+	if valid := utils.ValidateEmail(req.Email); !valid {
+		utils.HandleError(ctx, http.StatusBadRequest, "Bad Request", "invalid email", fmt.Errorf("invalid email"))
+		return
+	}
+
+	// Validasi password
+	if valid := utils.ValidatePassword(req.Password); !valid {
+		utils.HandleError(ctx, http.StatusBadRequest, "Bad Request", "invalid password", fmt.Errorf("invalid password"))
 		return
 	}
 
@@ -93,5 +108,35 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		Success: true,
 		Message: "Login successful",
 		Token:   token,
+	})
+}
+
+func (h *AuthHandler) Logout(ctx *gin.Context) {
+	token, err := utils.GetToken(ctx)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusUnauthorized, "Unauthorized", "failed get token", err)
+		return
+	}
+
+	expiresAt, err := utils.GetExpiredFromJWT(ctx)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusUnauthorized, "Unauthorized", "failed get expired time token", err)
+		return
+	}
+
+	expiresIn := time.Until(expiresAt)
+	if expiresIn <= 0 {
+		utils.HandleError(ctx, http.StatusUnauthorized, "Unauthorized", "token already expired", err)
+		return
+	}
+
+	redisKey := fmt.Sprintf("Blacklist:%s", token)
+	if err := utils.RenewCache(ctx.Request.Context(), h.rdb, redisKey, token, expiresIn); err != nil {
+		log.Println("Failed to set redis cache:", err)
+	}
+
+	ctx.JSON(http.StatusOK, models.Response[any]{
+		Success: true,
+		Message: "Successfully logged out",
 	})
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func IsBlacklisted(ctx context.Context, rdb *redis.Client, token string) (bool, error) {
-	res, err := rdb.Exists(ctx, "blacklist:"+token).Result()
+	res, err := rdb.Exists(ctx, "Blacklist:"+token).Result()
 	if err != nil {
 		return false, err
 	}

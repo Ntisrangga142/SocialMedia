@@ -7,16 +7,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 )
 
 type Auth struct {
-	db  *pgxpool.Pool
-	rdb *redis.Client
+	db *pgxpool.Pool
 }
 
-func NewAuthRepo(Db *pgxpool.Pool, Rdb *redis.Client) *Auth {
-	return &Auth{db: Db, rdb: Rdb}
+func NewAuthRepo(Db *pgxpool.Pool) *Auth {
+	return &Auth{db: Db}
 }
 
 func (r *Auth) Register(ctx context.Context, email, password string) error {

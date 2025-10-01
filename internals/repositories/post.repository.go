@@ -16,6 +16,7 @@ func NewPostRepository(db *pgxpool.Pool) *PostRepository {
 	return &PostRepository{db: db}
 }
 
+// Get Following Posts
 func (r *PostRepository) GetFollowingPosts(ctx context.Context, followerID int) ([]models.PostFeed, error) {
 	query := `
 		SELECT 
@@ -63,6 +64,64 @@ func (r *PostRepository) GetFollowingPosts(ctx context.Context, followerID int) 
 	return posts, nil
 }
 
+// Get Post Detail
+func (r *PostRepository) GetPostDetail(ctx context.Context, postID int) (*models.PostDetail, error) {
+	query := `
+		SELECT p.id, p.caption, p.created_at,
+		       pr.id, pr.fullname, pr.img,
+		       COALESCE(ARRAY_AGG(DISTINCT pi.img) FILTER (WHERE pi.deleted_at IS NULL), '{}') AS images,
+		       COUNT(DISTINCT lk.id) FILTER (WHERE lk.deleted_at IS NULL) AS like_count
+		FROM posts p
+		INNER JOIN profiles pr ON pr.id = p.account_id
+		LEFT JOIN post_imgs pi ON p.id = pi.post_id
+		LEFT JOIN likes lk ON p.id = lk.post_id
+		WHERE p.id = $1 AND p.deleted_at IS NULL
+		GROUP BY p.id, pr.id, pr.fullname, pr.img
+	`
+
+	var post models.PostDetail
+	err := r.db.QueryRow(ctx, query, postID).Scan(
+		&post.ID,
+		&post.Caption,
+		&post.CreatedAt,
+		&post.Author.ID,
+		&post.Author.Fullname,
+		&post.Author.Img,
+		&post.Images,
+		&post.Likes,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed get post detail: %w", err)
+	}
+
+	commentQuery := `
+		SELECT c.id, c.account_id, pr.fullname, pr.img, c.comment, c.created_at
+		FROM comments c
+		INNER JOIN profiles pr ON pr.id = c.account_id
+		WHERE c.post_id = $1 AND c.deleted_at IS NULL
+		ORDER BY c.created_at DESC
+		LIMIT 5
+	`
+	rows, err := r.db.Query(ctx, commentQuery, postID)
+	if err != nil {
+		return nil, fmt.Errorf("failed get comments: %w", err)
+	}
+	defer rows.Close()
+
+	var comments []models.CommentPreview
+	for rows.Next() {
+		var cm models.CommentPreview
+		if err := rows.Scan(&cm.ID, &cm.AccountID, &cm.Fullname, &cm.Img, &cm.Comment, &cm.CreatedAt); err != nil {
+			return nil, err
+		}
+		comments = append(comments, cm)
+	}
+	post.Comments = comments
+
+	return &post, nil
+}
+
+// Create Post
 func (r *PostRepository) CreatePost(ctx context.Context, req models.CreatePostRequest, accountID int) (*models.Post, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {

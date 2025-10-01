@@ -25,6 +25,7 @@ type CreatePostRequest struct {
 	Images  []string
 }
 
+// Post Feed
 type PostFeed struct {
 	ID           int      `json:"id"`
 	Fullname     string   `json:"fullname"`
@@ -32,4 +33,32 @@ type PostFeed struct {
 	Images       []string `json:"images"`
 	LikeCount    int      `json:"like_count"`
 	CommentCount int      `json:"comment_count"`
+}
+
+// Post Detail
+type PostDetail struct {
+	ID        int              `json:"id"`
+	Caption   string           `json:"caption"`
+	CreatedAt time.Time        `json:"created_at"`
+	Author    AuthorProfile    `json:"author"`
+	Images    []string         `json:"images"`
+	Likes     int              `json:"likes"`
+	Comments  []CommentPreview `json:"comments"`
+}
+
+// Info Author
+type AuthorProfile struct {
+	ID       int    `json:"id"`
+	Fullname string `json:"fullname"`
+	Img      string `json:"img"`
+}
+
+// Preview Comment
+type CommentPreview struct {
+	ID        int       `json:"id"`
+	AccountID int       `json:"account_id"`
+	Fullname  string    `json:"fullname"`
+	Img       string    `json:"img"`
+	Comment   string    `json:"comment"`
+	CreatedAt time.Time `json:"created_at"`
 }

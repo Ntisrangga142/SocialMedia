@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -39,6 +40,42 @@ func (h *PostHandler) GetFollowingPosts(ctx *gin.Context) {
 		Success: true,
 		Message: "Success Get Post Followings",
 		Data:    posts,
+	})
+}
+
+// Get Post Detail
+func (h *PostHandler) GetPostDetail(ctx *gin.Context) {
+	postID, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "Invalid ID", "post id must be number", err)
+		return
+	}
+
+	var cachedData models.PostDetail
+	var redisKey = fmt.Sprintf("Chat-PostDetail-%d", postID)
+	if err := utils.CacheHit(ctx.Request.Context(), h.rdb, redisKey, &cachedData); err == nil {
+		ctx.JSON(http.StatusOK, models.Response[any]{
+			Success: true,
+			Message: "Success Get Profile User (from cache)",
+			Data:    cachedData,
+		})
+		return
+	}
+
+	post, err := h.repo.GetPostDetail(ctx.Request.Context(), postID)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "Failed", "cannot get post detail", err)
+		return
+	}
+
+	if err := utils.RenewCache(ctx.Request.Context(), h.rdb, redisKey, post, 10); err != nil {
+		log.Println("Failed to set redis cache:", err)
+	}
+
+	ctx.JSON(http.StatusOK, models.Response[any]{
+		Success: true,
+		Message: fmt.Sprintf("Success Get Post Detail - %d", postID),
+		Data:    post,
 	})
 }
 
@@ -110,6 +147,11 @@ func (h *PostHandler) LikePost(ctx *gin.Context) {
 		return
 	}
 
+	var redisKey = fmt.Sprintf("Chat-PostDetail-%d", postID)
+	if err := utils.InvalidateCache(ctx, h.rdb, redisKey); err != nil {
+		log.Println("Failed invalidate cache:", err)
+	}
+
 	ctx.Status(http.StatusNoContent)
 }
 
@@ -125,6 +167,11 @@ func (h *PostHandler) UnlikePost(ctx *gin.Context) {
 	if err := h.repo.DeleteLike(ctx, uid, postID); err != nil {
 		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Sever Error", "failed to unlike post", err)
 		return
+	}
+
+	var redisKey = fmt.Sprintf("Chat-PostDetail-%d", postID)
+	if err := utils.InvalidateCache(ctx, h.rdb, redisKey); err != nil {
+		log.Println("Failed invalidate cache:", err)
 	}
 
 	ctx.Status(http.StatusNoContent)
@@ -147,6 +194,11 @@ func (h *PostHandler) CreateComment(ctx *gin.Context) {
 	if err := h.repo.CreateComment(ctx, uid, req); err != nil {
 		utils.HandleError(ctx, http.StatusInternalServerError, "Internal Server Error", "failed to create comment", err)
 		return
+	}
+
+	var redisKey = fmt.Sprintf("Chat-PostDetail-%d", req.PostID)
+	if err := utils.InvalidateCache(ctx, h.rdb, redisKey); err != nil {
+		log.Println("Failed invalidate cache:", err)
 	}
 
 	ctx.Status(http.StatusCreated)

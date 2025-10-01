@@ -13,6 +13,8 @@ func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	middlewares.InitRedis(rdb)
 
 	InitAuth(router, db, rdb)
+	InitUser(router, db, rdb)
+	InitPost(router, db, rdb)
 
 	return router
 }

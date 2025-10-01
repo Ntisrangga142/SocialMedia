@@ -14,10 +14,11 @@ func InitPost(ctx *gin.Engine, db *pgxpool.Pool, rdb *redis.Client) {
 	handler := handlers.NewPostHandler(repo, rdb)
 
 	post := ctx.Group("/post")
+	post.Use(middlewares.Authentication)
 
-	post.GET("", middlewares.Authentication, handler.GetFollowingPosts)
-	post.GET("/:id", middlewares.Authentication, handler.GetPostDetail)
-	post.POST("", middlewares.Authentication, handler.CreatePost)
+	post.GET("", handler.GetFollowingPosts)
+	post.GET("/:id", handler.GetPostDetail)
+	post.POST("", handler.CreatePost)
 
 	post.POST("/:id/like", handler.LikePost)
 	post.DELETE("/:id/like", handler.UnlikePost)

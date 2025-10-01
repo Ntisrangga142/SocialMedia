@@ -21,9 +21,13 @@ func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 
 	middlewares.InitRedis(rdb)
 
+	router.Static("/avatar", "./public/profile")
+	router.Static("/img", "./public/post")
+
 	InitAuth(router, db, rdb)
 	InitUser(router, db, rdb)
 	InitPost(router, db, rdb)
+	InitNotif(router, db, rdb)
 
 	return router
 }

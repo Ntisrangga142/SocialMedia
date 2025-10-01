@@ -7,18 +7,10 @@
         "description": "API documentation for social media app",
         "title": "Social Media API",
         "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "email": "support@socialmedia.com"
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        },
+        "contact": {},
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/api/v1",
     "paths": {
         "/auth/login": {
             "post": {

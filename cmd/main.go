@@ -9,6 +9,23 @@ import (
 	"github.com/ntisrangga142/chat/internals/routers"
 )
 
+// @title Social Media API
+// @version 1.0
+// @description API documentation for social media app
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.email support@socialmedia.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	// Load ENV
 	err := godotenv.Load()

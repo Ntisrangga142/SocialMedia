@@ -1,0 +1,713 @@
+basePath: /api/v1
+definitions:
+  models.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.AuthorProfile:
+    properties:
+      fullname:
+        example: Rangga Putra
+        type: string
+      id:
+        example: 1
+        type: integer
+      img:
+        example: public/profile/rangga.jpg
+        type: string
+    type: object
+  models.Comment:
+    properties:
+      account_id:
+        type: integer
+      comment:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+    type: object
+  models.CommentPreview:
+    properties:
+      comment:
+        example: Keren banget fotonya!
+        type: string
+      created_at:
+        example: "2025-09-20T14:30:00Z"
+        type: string
+      fullname:
+        example: Siti Amelia
+        type: string
+      id:
+        example: 501
+        type: integer
+    type: object
+  models.CreateCommentRequest:
+    properties:
+      comment:
+        type: string
+      post_id:
+        type: integer
+    type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        example: Error Message
+        type: string
+      status:
+        example: HTTP Status Error
+        type: string
+      status_code:
+        example: 400
+        type: integer
+      success:
+        example: false
+        type: boolean
+    type: object
+  models.Post:
+    properties:
+      account_id:
+        type: integer
+      caption:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/models.PostImg'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  models.PostDetail:
+    properties:
+      author:
+        $ref: '#/definitions/models.AuthorProfile'
+      caption:
+        example: Liburan di pantai bareng teman-teman!
+        type: string
+      comments:
+        items:
+          $ref: '#/definitions/models.CommentPreview'
+        type: array
+      created_at:
+        example: "2025-09-20T12:00:00Z"
+        type: string
+      id:
+        example: 101
+        type: integer
+      images:
+        example:
+        - '[''public/post/1.jpg'''
+        - '''public/post/2.jpg'']'
+        items:
+          type: string
+        type: array
+      likes:
+        example: 123
+        type: integer
+    type: object
+  models.PostFeed:
+    properties:
+      caption:
+        example: Liburan di pantai bareng teman-teman!
+        type: string
+      comment_count:
+        example: 45
+        type: integer
+      fullname:
+        example: Rangga Putra
+        type: string
+      id:
+        example: 101
+        type: integer
+      images:
+        example:
+        - '[''public/post/1.jpg'''
+        - '''public/post/2.jpg'']'
+        items:
+          type: string
+        type: array
+      like_count:
+        example: 123
+        type: integer
+    type: object
+  models.PostImg:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      img:
+        type: string
+      post_id:
+        type: integer
+    type: object
+  models.ResponseAny:
+    properties:
+      data: {}
+      message:
+        example: Succes Get Comment by Id Post
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.ResponseCreatePost:
+    properties:
+      data:
+        $ref: '#/definitions/models.Post'
+      message:
+        example: Success Created Post
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.ResponseGetComment:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      message:
+        example: Succes Get Comment by Id Post
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.ResponseLogin:
+    properties:
+      message:
+        example: Request processed successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+      token:
+        type: string
+    type: object
+  models.ResponsePostDetail:
+    properties:
+      data:
+        $ref: '#/definitions/models.PostDetail'
+      message:
+        example: Success Get Post Detail
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.ResponsePostList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.PostFeed'
+        type: array
+      message:
+        example: Success Get Post Followings
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@socialmedia.com
+    name: API Support
+  description: API documentation for social media app
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Social Media API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email & password, return JWT token
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/models.ResponseLogin'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Invalidate JWT token by blacklisting it
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully logged out
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create new account with email & password
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Register successful
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Register a new account
+      tags:
+      - Auth
+  /posts:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new post with caption and images (form-data)
+      parameters:
+      - description: Post Caption
+        in: formData
+        name: caption
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Post Images
+        in: formData
+        items:
+          type: file
+        name: images
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ResponseCreatePost'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Post
+      tags:
+      - Posts
+  /posts/{id}:
+    get:
+      description: Get detail of a single post including author, images, like count,
+        and top comments
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponsePostDetail'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Post Detail
+      tags:
+      - Posts
+  /posts/{id}/comments:
+    get:
+      description: Get all comments from a post by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseGetComment'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Comments by Post
+      tags:
+      - Posts
+    post:
+      consumes:
+      - application/json
+      description: Create a comment for a post
+      parameters:
+      - description: Comment Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Comment
+      tags:
+      - Posts
+  /posts/{id}/like:
+    delete:
+      description: Remove like from a post by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unlike a Post
+      tags:
+      - Posts
+    post:
+      description: Like a post by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Like a Post
+      tags:
+      - Posts
+  /posts/following:
+    get:
+      description: Get posts from accounts that the user follows
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponsePostList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Following Posts
+      tags:
+      - Posts
+  /users/{id}/follow:
+    post:
+      description: Follow another user by ID
+      parameters:
+      - description: Target User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success Followed
+          schema:
+            $ref: '#/definitions/models.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Follow user
+      tags:
+      - User
+  /users/{id}/unfollow:
+    delete:
+      description: Unfollow another user by ID
+      parameters:
+      - description: Target User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unfollow user
+      tags:
+      - User
+  /users/followers:
+    get:
+      description: Get list of users who follow me
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get followers
+      tags:
+      - User
+  /users/following:
+    get:
+      description: Get list of users I follow
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get following
+      tags:
+      - User
+  /users/profile:
+    get:
+      description: Get the profile of the logged in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get my profile
+      tags:
+      - User
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update profile fields (fullname, phone, and profile picture)
+      parameters:
+      - description: Full Name
+        in: formData
+        name: fullname
+        type: string
+      - description: Phone Number
+        in: formData
+        name: phone
+        type: string
+      - description: Profile Image
+        in: formData
+        name: img
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            $ref: '#/definitions/models.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update my profile
+      tags:
+      - User
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

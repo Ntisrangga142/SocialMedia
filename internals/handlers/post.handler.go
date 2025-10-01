@@ -22,7 +22,16 @@ func NewPostHandler(repo *repositories.PostRepository, rdb *redis.Client) *PostH
 	return &PostHandler{repo: repo, rdb: rdb}
 }
 
-// Get Following Posts
+// GetFollowingPosts godoc
+// @Summary Get Following Posts
+// @Description Get posts from accounts that the user follows
+// @Tags Posts
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} models.ResponsePostList
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /posts/following [get]
 func (h *PostHandler) GetFollowingPosts(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -43,7 +52,18 @@ func (h *PostHandler) GetFollowingPosts(ctx *gin.Context) {
 	})
 }
 
-// Get Post Detail
+// GetPostDetail godoc
+// @Summary Get Post Detail
+// @Description Get detail of a single post including author, images, like count, and top comments
+// @Tags Posts
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Post ID"
+// @Success 200 {object} models.ResponsePostDetail
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /posts/{id} [get]
 func (h *PostHandler) GetPostDetail(ctx *gin.Context) {
 	postID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -79,7 +99,20 @@ func (h *PostHandler) GetPostDetail(ctx *gin.Context) {
 	})
 }
 
-// Create Post
+// CreatePost godoc
+// @Summary Create Post
+// @Description Create a new post with caption and images (form-data)
+// @Tags Posts
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param caption formData string true "Post Caption"
+// @Param images formData []file true "Post Images"
+// @Success 201 {object} models.ResponseCreatePost
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /posts [post]
 func (h *PostHandler) CreatePost(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -128,7 +161,16 @@ func (h *PostHandler) CreatePost(ctx *gin.Context) {
 	})
 }
 
-// Like Post
+// LikePost godoc
+// @Summary Like a Post
+// @Description Like a post by ID
+// @Tags Posts
+// @Security BearerAuth
+// @Param id path int true "Post ID"
+// @Success 204
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /posts/{id}/like [post]
 func (h *PostHandler) LikePost(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -155,7 +197,16 @@ func (h *PostHandler) LikePost(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// Unlike Post
+// UnlikePost godoc
+// @Summary Unlike a Post
+// @Description Remove like from a post by ID
+// @Tags Posts
+// @Security BearerAuth
+// @Param id path int true "Post ID"
+// @Success 204
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /posts/{id}/like [delete]
 func (h *PostHandler) UnlikePost(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -177,7 +228,19 @@ func (h *PostHandler) UnlikePost(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// Comment Post
+// CreateComment godoc
+// @Summary Create Comment
+// @Description Create a comment for a post
+// @Tags Posts
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body models.CreateCommentRequest true "Comment Request"
+// @Success 201
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /posts/{id}/comments [post]
 func (h *PostHandler) CreateComment(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -204,7 +267,17 @@ func (h *PostHandler) CreateComment(ctx *gin.Context) {
 	ctx.Status(http.StatusCreated)
 }
 
-// Get Comment Post
+// GetAllCommentsByPost godoc
+// @Summary Get All Comments by Post
+// @Description Get all comments from a post by ID
+// @Tags Posts
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Post ID"
+// @Success 200 {object} models.ResponseGetComment
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /posts/{id}/comments [get]
 func (h *PostHandler) GetAllCommentsByPost(ctx *gin.Context) {
 	postID, _ := strconv.Atoi(ctx.Param("id"))
 	comments, err := h.repo.GetAllCommentsByPost(ctx, postID)

@@ -22,7 +22,16 @@ func NewUserHandler(repo *repositories.UserRepository, rdb *redis.Client) *UserH
 	return &UserHandler{repo: repo, rdb: rdb}
 }
 
-// Get Profile
+// GetProfile godoc
+// @Summary Get my profile
+// @Description Get the profile of the logged in user
+// @Tags User
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} models.ResponseAny
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /users/profile [get]
 func (h *UserHandler) GetProfile(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -58,7 +67,21 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 	})
 }
 
-// Update Profile
+// UpdateProfile godoc
+// @Summary Update my profile
+// @Description Update profile fields (fullname, phone, and profile picture)
+// @Tags User
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param fullname formData string false "Full Name"
+// @Param phone formData string false "Phone Number"
+// @Param img formData file false "Profile Image"
+// @Success 200 {object} models.ResponseAny "Profile updated successfully"
+// @Failure 400 {object} models.ErrorResponse "Bad Request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /users/profile [put]
 func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -108,7 +131,18 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 	})
 }
 
-// Follow user
+// Follow godoc
+// @Summary Follow user
+// @Description Follow another user by ID
+// @Tags User
+// @Security BearerAuth
+// @Param id path int true "Target User ID"
+// @Produce json
+// @Success 201 {object} models.ResponseAny "Success Followed"
+// @Failure 400 {object} models.ErrorResponse "Bad Request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /users/{id}/follow [post]
 func (h *UserHandler) Follow(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -138,7 +172,17 @@ func (h *UserHandler) Follow(ctx *gin.Context) {
 	})
 }
 
-// Unfollow user
+// Unfollow godoc
+// @Summary Unfollow user
+// @Description Unfollow another user by ID
+// @Tags User
+// @Security BearerAuth
+// @Param id path int true "Target User ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} models.ErrorResponse "Bad Request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /users/{id}/unfollow [delete]
 func (h *UserHandler) Unfollow(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -160,7 +204,16 @@ func (h *UserHandler) Unfollow(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// Get Followers (daftar pengikut saya)
+// GetFollowers godoc
+// @Summary Get followers
+// @Description Get list of users who follow me
+// @Tags User
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} models.ResponseAny
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /users/followers [get]
 func (h *UserHandler) GetFollowers(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {
@@ -181,7 +234,16 @@ func (h *UserHandler) GetFollowers(ctx *gin.Context) {
 	})
 }
 
-// Get Following (daftar siapa saja yang saya ikuti)
+// GetFollowing godoc
+// @Summary Get following
+// @Description Get list of users I follow
+// @Tags User
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} models.ResponseAny
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /users/following [get]
 func (h *UserHandler) GetFollowing(ctx *gin.Context) {
 	uid, err := utils.GetUserIDFromJWT(ctx)
 	if err != nil {

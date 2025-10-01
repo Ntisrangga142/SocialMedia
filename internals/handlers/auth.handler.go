@@ -24,6 +24,17 @@ func NewAuthHandler(repo *repositories.Auth, rdb *redis.Client) *AuthHandler {
 	return &AuthHandler{repo: repo, rdb: rdb}
 }
 
+// Register godoc
+// @Summary Register a new account
+// @Description Create new account with email & password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.AuthRequest true "Register Request"
+// @Success 201 {object} models.ErrorResponse "Register successful"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /auth/register [post]
 func (h *AuthHandler) Register(ctx *gin.Context) {
 	var req models.AuthRequest
 
@@ -65,6 +76,18 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary Login user
+// @Description Authenticate user with email & password, return JWT token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.AuthRequest true "Login Request"
+// @Success 200 {object} models.ResponseLogin "Login successful"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(ctx *gin.Context) {
 	var req models.AuthRequest
 
@@ -111,6 +134,15 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 	})
 }
 
+// Logout godoc
+// @Summary Logout user
+// @Description Invalidate JWT token by blacklisting it
+// @Tags Auth
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} models.ErrorResponse "Successfully logged out"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Router /auth/logout [post]
 func (h *AuthHandler) Logout(ctx *gin.Context) {
 	token, err := utils.GetToken(ctx)
 	if err != nil {

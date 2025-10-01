@@ -3,12 +3,23 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	docs "github.com/ntisrangga142/chat/docs"
 	"github.com/ntisrangga142/chat/internals/middlewares"
 	"github.com/redis/go-redis/v9"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	router := gin.Default()
+
+	docs.SwaggerInfo.Title = "Social Media API"
+	docs.SwaggerInfo.Description = "This is a sample API for social media"
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Host = "localhost:8080"
+	docs.SwaggerInfo.BasePath = "/api/v1"
+
+	router.GET("/chat/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	middlewares.InitRedis(rdb)
 

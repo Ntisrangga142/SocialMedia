@@ -111,7 +111,7 @@ func (r *PostRepository) GetPostDetail(ctx context.Context, postID int) (*models
 	var comments []models.CommentPreview
 	for rows.Next() {
 		var cm models.CommentPreview
-		if err := rows.Scan(&cm.ID, &cm.AccountID, &cm.Fullname, &cm.Img, &cm.Comment, &cm.CreatedAt); err != nil {
+		if err := rows.Scan(&cm.ID, &cm.ID, &cm.Fullname, &cm.Comment, &cm.CreatedAt); err != nil {
 			return nil, err
 		}
 		comments = append(comments, cm)

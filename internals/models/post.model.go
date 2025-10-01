@@ -42,6 +42,7 @@ type AuthorProfile struct {
 	Img      string `json:"img" example:"public/profile/rangga.jpg"`
 }
 
+// Comment Preview
 type CommentPreview struct {
 	ID        int       `json:"id" example:"501"`
 	Fullname  string    `json:"fullname" example:"Siti Amelia"`
@@ -49,6 +50,7 @@ type CommentPreview struct {
 	CreatedAt time.Time `json:"created_at" example:"2025-09-20T14:30:00Z"`
 }
 
+// Post Detail
 type PostDetail struct {
 	ID        int              `json:"id" example:"101"`
 	Caption   string           `json:"caption" example:"Liburan di pantai bareng teman-teman!"`

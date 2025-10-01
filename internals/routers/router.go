@@ -17,8 +17,6 @@ func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	docs.SwaggerInfo.Description = "This is a sample API for social media"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Host = "localhost:8080"
-	docs.SwaggerInfo.BasePath = "/api/v1"
-
 	router.GET("/chat/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	middlewares.InitRedis(rdb)
